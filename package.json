@@ -1,0 +1,35 @@
+{
+  "name": "kuesioner-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Aplikasi Kuesioner dan Analisis Kepribadian - Node.js, Express, EJS, PostgreSQL Supabase, Vercel",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "check:schema": "node scripts/check-schema.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^2.4.3",
+    "connect-pg-simple": "^10.0.0",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "ejs-mate": "^4.0.0",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "otpauth": "^9.3.6",
+    "pg": "^8.13.1",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7",
+    "supertest": "^7.0.0"
+  }
+}

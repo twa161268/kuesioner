@@ -1,0 +1,26 @@
+<% layout('layouts/main') -%>
+<div class="participant-shell participant-questionnaire"><section class="content-card">
+  <div class="eyebrow">LEMBAR KUESIONER</div>
+  <h1 class="h3 mt-2"><%= detail.nama_kuesioner || 'Kuesioner' %></h1>
+  <p class="text-muted mb-1">Peserta: <b><%= sesi.nama_peserta %></b> · Kode sesi: <b><%= sesi.kode_sesi %></b></p>
+  <p class="text-muted"><%= detail.nama_versi || detail.kode_versi %> · <%= items.length %> pertanyaan</p><p><a href="/kuesioner/hasil/<%= token %>">Lihat status semua tes dan hasil yang sudah terbit</a></p>
+  <div class="notice-box mb-3">Pilih satu jawaban yang paling sesuai untuk setiap pernyataan. Jawablah dengan jujur sesuai diri Anda. Pastikan semua pertanyaan terisi sebelum menekan tombol <b>Simpan Jawaban</b>.</div>
+  <% if (error) { %><div class="alert alert-warning"><%= error %></div><% } %>
+  <form method="post" action="/kuesioner/isi/<%= token %>">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <% items.forEach((q, idx) => { %>
+      <fieldset class="question-item" <%= q.wajib_dijawab ? 'data-required="true"' : '' %>>
+        <legend><span class="question-number"><%= idx + 1 %></span><span><%= q.teks_pertanyaan %><% if (q.wajib_dijawab) { %> <span class="text-danger">*</span><% } %></span></legend>
+        <div class="question-options">
+          <% q.pilihan.forEach(opt => { %>
+            <label class="question-option">
+              <input type="radio" name="jawaban[<%= q.pertanyaan_id %>]" value="<%= opt.pilihan_id %>" <%= String(q.pilihanTerpilih) === String(opt.pilihan_id) ? 'checked' : '' %> <%= q.wajib_dijawab ? 'required' : '' %>>
+              <span><%= opt.label_pilihan %></span>
+            </label>
+          <% }) %>
+        </div>
+      </fieldset>
+    <% }) %>
+    <div class="question-submit"><p class="small text-muted">* Wajib dijawab. Setelah disimpan, lembar tes ini dikunci dan tidak dapat diubah oleh peserta.</p><button class="btn btn-primary btn-lg w-100" type="submit" onclick="return confirm('Pastikan jawaban sudah benar. Setelah disimpan, lembar tes ini akan dikunci. Lanjutkan?')">Simpan Jawaban</button></div>
+  </form>
+</section></div>

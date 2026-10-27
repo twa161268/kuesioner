@@ -1,0 +1,10 @@
+NODE_ENV=development
+PORT=3000
+APP_BASE_URL=http://localhost:3000
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE?sslmode=require
+SESSION_SECRET=replace-with-at-least-32-random-bytes
+SESSION_TABLE_NAME=kuesioner_app_sessions
+# Set true only after reviewing and running docs/session-store-migration.sql
+SESSION_TABLE_READY=false
+# Optional. If your Supabase network uses a pooler, use the connection string recommended for server-side apps.
+PG_POOL_MAX=5

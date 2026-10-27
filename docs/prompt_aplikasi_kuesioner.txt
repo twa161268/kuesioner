@@ -1,0 +1,683 @@
+# PROMPT UTAMA — APLIKASI KUESIONER & ANALISIS KEPRIBADIAN
+
+## 1. Peran dan tujuan
+
+Bertindaklah sebagai Senior Full-Stack Developer dan Software Architect yang berpengalaman dalam Node.js, Express.js, PostgreSQL, Supabase, keamanan aplikasi web, pengolahan kuesioner, pembuatan laporan PDF, dan deployment ke Vercel.
+
+Bangun aplikasi web Kuesioner dan Analisis Kepribadian yang profesional, modular, aman, mudah dikembangkan, dan siap di-deploy ke Vercel.
+
+Aplikasi harus mendukung berbagai jenis kuesioner, bukan hanya tes kepribadian yang terinspirasi dari empat dimensi seperti MBTI. Setiap kuesioner dapat mempunyai versi, batas usia, jumlah pertanyaan, pilihan jawaban, aturan skor, dan interpretasi yang berbeda.
+
+Gunakan bahasa Indonesia untuk antarmuka, pesan validasi, dan laporan.
+
+## 2. Teknologi yang wajib digunakan
+
+- Node.js dengan JavaScript.
+- Express.js sebagai web framework.
+- PostgreSQL Supabase sebagai database.
+- `pg` untuk koneksi PostgreSQL langsung.
+- EJS sebagai template engine.
+- HTML5, CSS3, Bootstrap 5 bila diperlukan, dan JavaScript frontend.
+- `express-session` untuk sesi login administrator.
+- `bcrypt` atau Argon2id untuk verifikasi password hash.
+- `connect-pg-simple` atau session store PostgreSQL lain yang kompatibel dengan Vercel, setelah memeriksa kebutuhan dan konfigurasi database.
+- Library PDF yang kompatibel dengan Node.js dan Vercel untuk menghasilkan laporan PDF.
+- `dotenv` untuk pengembangan lokal.
+- Git dan Vercel untuk deployment.
+
+Jangan menggunakan Supabase Auth. Autentikasi administrator harus dikelola sendiri oleh aplikasi Node.js menggunakan tabel `public.kuesioner_user`.
+
+Gunakan versi package yang saling kompatibel dan stabil. Buat `package.json` beserta script yang diperlukan untuk development dan production.
+
+## 3. Arsitektur aplikasi
+
+Terapkan pola MVC yang jelas, dengan pemisahan tanggung jawab antara route, controller, repository/model, service, middleware, dan view.
+
+Gunakan struktur direktori seperti berikut:
+
+```text
+kuesioner-app/
+├── api/
+│   └── index.js
+├── src/
+│   ├── app.js
+│   ├── config/
+│   │   ├── database.js
+│   │   ├── session.js
+│   │   └── environment.js
+│   ├── routes/
+│   │   ├── public.routes.js
+│   │   ├── auth.routes.js
+│   │   ├── admin.routes.js
+│   │   ├── superAdmin.routes.js
+│   │   ├── questionnaire.routes.js
+│   │   └── report.routes.js
+│   ├── controllers/
+│   │   ├── auth.controller.js
+│   │   ├── dashboard.controller.js
+│   │   ├── pemohon.controller.js
+│   │   ├── sesi.controller.js
+│   │   ├── kuesioner.controller.js
+│   │   ├── pertanyaan.controller.js
+│   │   ├── jawaban.controller.js
+│   │   ├── hasil.controller.js
+│   │   ├── laporan.controller.js
+│   │   ├── user.controller.js
+│   │   └── permintaanHapus.controller.js
+│   ├── repositories/
+│   │   ├── user.repository.js
+│   │   ├── pemohon.repository.js
+│   │   ├── sesi.repository.js
+│   │   ├── kuesioner.repository.js
+│   │   ├── jawaban.repository.js
+│   │   ├── hasil.repository.js
+│   │   └── laporan.repository.js
+│   ├── services/
+│   │   ├── auth.service.js
+│   │   ├── qrPin.service.js
+│   │   ├── scoring.service.js
+│   │   ├── interpretation.service.js
+│   │   ├── reportPdf.service.js
+│   │   ├── audit.service.js
+│   │   └── deletion.service.js
+│   ├── middlewares/
+│   │   ├── requireAuth.js
+│   │   ├── requireRole.js
+│   │   ├── validateRequest.js
+│   │   ├── csrf.js
+│   │   ├── rateLimiter.js
+│   │   └── errorHandler.js
+│   ├── validators/
+│   ├── utils/
+│   └── views/
+│       ├── layouts/
+│       ├── partials/
+│       ├── public/
+│       ├── auth/
+│       ├── admin/
+│       ├── super-admin/
+│       ├── pemohon/
+│       ├── sesi/
+│       ├── kuesioner/
+│       ├── hasil/
+│       ├── laporan/
+│       └── errors/
+├── public/
+│   ├── css/
+│   │   ├── main.css
+│   │   ├── auth.css
+│   │   ├── dashboard.css
+│   │   ├── forms.css
+│   │   └── responsive.css
+│   ├── js/
+│   │   ├── main.js
+│   │   ├── form-validation.js
+│   │   ├── questionnaire.js
+│   │   └── dashboard.js
+│   └── images/
+├── tests/
+├── .env.example
+├── .gitignore
+├── package.json
+└── README.md
+```
+
+Struktur tersebut merupakan rancangan awal dan boleh disesuaikan jika ada alasan teknis yang kuat. Jangan membuat file kosong hanya untuk memenuhi struktur. Setiap modul harus memiliki fungsi nyata dan terintegrasi.
+
+Controller hanya mengatur alur request dan response. Repository menangani query database. Service berisi logika bisnis. Middleware menangani autentikasi, otorisasi, validasi, dan keamanan. View hanya menangani presentasi.
+
+## 4. Aturan wajib untuk database Supabase
+
+Sebelum membuat kode database, pelajari dokumentasi `database_struktur(2).txt` dan verifikasi schema aktual yang tersedia.
+
+Tabel yang sudah teridentifikasi meliputi:
+
+- `kuesioner_user`
+- `kuesioner_master`
+- `kuesioner_versi`
+- `kuesioner_dimensi`
+- `kuesioner_pertanyaan`
+- `kuesioner_pilihan`
+- `kuesioner_aturan_skor`
+- `kuesioner_interpretasi`
+- `kuesioner_pemohon`
+- `kuesioner_sesi`
+- `kuesioner_sesi_detail`
+- `kuesioner_jawaban`
+- `kuesioner_hasil`
+- `kuesioner_hasil_dimensi`
+- `kuesioner_laporan`
+- `kuesioner_audit_log`
+- `kuesioner_permintaan_hapus`
+
+Ketentuan:
+
+1. Jangan mengganti nama tabel atau kolom yang sudah ada.
+2. Jangan mengasumsikan nama kolom, tipe data, default, atau relasi yang belum diverifikasi.
+3. Periksa primary key, foreign key, unique constraint, check constraint, index, sequence, dan trigger sebelum menulis query.
+4. Periksa bahwa kolom ID benar-benar mempunyai default sequence atau mekanisme pembangkitan ID yang sesuai. Jangan menganggap sequence otomatis terhubung hanya karena sequence tersedia.
+5. Jangan membuat ulang tabel yang sudah ada.
+6. Jangan menjalankan migrasi destruktif, menghapus data, atau mengubah constraint tanpa alasan teknis yang jelas dan persetujuan terlebih dahulu.
+7. Jika diperlukan tabel tambahan, jelaskan fungsinya dan berikan SQL migrasi terpisah. Jangan langsung menjalankannya.
+8. Gunakan query parameterized melalui `pg`, bukan menggabungkan input pengguna langsung ke SQL.
+9. Gunakan transaksi database untuk operasi bisnis yang terdiri dari beberapa perubahan yang harus berhasil atau gagal bersama.
+10. Jangan mengekspos connection string, password, atau kredensial database ke browser.
+
+Database menggunakan PostgreSQL Supabase melalui koneksi langsung dari backend Node.js. Jangan menggunakan Supabase Auth atau menganggap akses database melalui Supabase API sama dengan koneksi PostgreSQL langsung.
+
+RLS diketahui aktif pada tabel-tabel kuesioner dan daftar policy yang diperiksa kosong. Evaluasi role koneksi database dan hak akses aktual. Jangan mematikan RLS atau menambah policy secara otomatis. Backend wajib menggunakan kredensial server yang tepat dan tidak boleh mengirim kredensial istimewa ke frontend.
+
+## 5. Login dan manajemen administrator
+
+Gunakan tabel `kuesioner_user` yang sudah ada. Verifikasi nama kolom aktualnya sebelum membuat implementasi.
+
+Login menggunakan email dan password:
+
+- Email dinormalisasi, misalnya dengan menghapus spasi di awal/akhir dan menggunakan huruf kecil.
+- Password disimpan hanya dalam bentuk hash yang kuat di `password_hash`.
+- Verifikasi password dengan bcrypt atau Argon2id yang kompatibel dengan lingkungan deployment.
+- Jangan pernah menyimpan password asli.
+- Jangan mengembalikan password hash ke view atau API.
+- Periksa status akun sebelum memberikan akses.
+- Akun `nonaktif` dan `terkunci` tidak boleh login.
+- Terapkan rate limit pada endpoint login.
+- Gunakan pesan kesalahan yang tidak membocorkan apakah email terdaftar.
+- Setelah login, regenerasi session ID.
+- Logout harus menghancurkan sesi login.
+- Terapkan cookie `httpOnly`, `secure` pada production HTTPS, dan `sameSite` yang sesuai.
+- Atur masa berlaku sesi dan mekanisme kedaluwarsanya.
+
+Role yang diperbolehkan oleh constraint database adalah `admin` dan `super_admin`. Gunakan nilai tersebut secara konsisten.
+
+Jangan mengandalkan penyembunyian tombol di frontend sebagai kontrol akses. Semua endpoint harus memeriksa autentikasi dan role di server.
+
+Buat prosedur bootstrap untuk membuat akun `super_admin` pertama secara aman. Jangan menanam email atau password admin secara permanen di source code. Jangan menyediakan registrasi publik administrator.
+
+## 6. Hak akses dan tanggung jawab
+
+### Admin
+
+Admin operasional dapat:
+
+- Mengakses dashboard operasional.
+- Mengelola pemohon.
+- Membuat dan mengelola sesi tes.
+- Menambahkan beberapa kuesioner ke satu sesi.
+- Mengelola proses pengerjaan dan pengiriman final.
+- Melihat jawaban yang telah dikirim.
+- Menjalankan perhitungan skor otomatis.
+- Memeriksa dan mengedit draf hasil sesuai aturan.
+- Menyetujui dan menerbitkan hasil jika diizinkan oleh alur persetujuan.
+- Membuat, menerbitkan, dan menarik laporan.
+- Menonaktifkan akses hasil.
+- Mengarsipkan sesi.
+- Mengajukan permintaan penghapusan permanen.
+- Melihat audit log sesuai kewenangannya.
+
+### Super Admin
+
+Super Admin memiliki kewenangan administrasi yang lebih tinggi:
+
+- Seluruh fungsi Admin.
+- Mengelola akun Admin.
+- Mengaktifkan, menonaktifkan, dan mengunci akun.
+- Mengelola konfigurasi penting.
+- Mengawasi audit log.
+- Meninjau dan menyetujui atau menolak permintaan penghapusan permanen.
+- Mengelola master kuesioner, versi, pertanyaan, pilihan, dimensi, aturan skor, dan interpretasi sesuai kebijakan aplikasi.
+
+Permintaan penghapusan permanen tidak boleh disetujui oleh orang yang mengajukannya. Terapkan pemeriksaan tersebut di backend sekaligus mempertahankan constraint database yang sudah ada.
+
+## 7. Manajemen master kuesioner
+
+Satu aplikasi harus dapat mengelola banyak jenis kuesioner.
+
+Gunakan struktur master dan versi yang sudah tersedia:
+
+- `kuesioner_master`: identitas kuesioner.
+- `kuesioner_versi`: versi dan parameter penerapan kuesioner.
+- `kuesioner_dimensi`: dimensi yang dinilai.
+- `kuesioner_pertanyaan`: pertanyaan.
+- `kuesioner_pilihan`: pilihan jawaban.
+- `kuesioner_aturan_skor`: aturan pemetaan jawaban ke skor/dimensi.
+- `kuesioner_interpretasi`: materi interpretasi hasil.
+
+Sediakan fungsi CRUD yang sesuai untuk Admin atau Super Admin berdasarkan matriks hak akses yang ditetapkan.
+
+Versi yang sudah diterbitkan dan telah digunakan dalam suatu sesi tidak boleh diubah sembarangan. Perubahan instrumen yang substantif harus menghasilkan versi baru agar hasil historis tetap dapat dijelaskan berdasarkan instrumen yang benar-benar dikerjakan peserta.
+
+Status master, versi, pertanyaan, pilihan, dan interpretasi harus mengikuti nilai yang diizinkan oleh constraint database. Jangan mengarang status baru tanpa memeriksa schema.
+
+Jumlah pertanyaan yang ditetapkan pada versi harus divalidasi terhadap pertanyaan aktif yang benar-benar tersedia. Jangan menerbitkan versi yang tidak memenuhi aturan kelengkapan.
+
+## 8. Kuesioner pertama dan dukungan kuesioner lainnya
+
+Kuesioner pertama adalah instrumen refleksi kepribadian yang terinspirasi dari empat dimensi preferensi. Instrumen ini harus merupakan instrumen orisinal, bukan klaim bahwa aplikasi menyediakan tes MBTI resmi.
+
+Rancangan awal jumlah pertanyaan:
+
+- Anak usia 8–12 tahun: 32 pertanyaan.
+- Remaja usia 13–17 tahun: 48 pertanyaan.
+- Dewasa usia 18 tahun ke atas: 60 pertanyaan.
+
+Angka tersebut merupakan rancangan awal dan harus dapat dikonfigurasi melalui versi kuesioner. Jangan menganggapnya sebagai standar ilmiah yang sudah tervalidasi.
+
+Setiap kuesioner dapat mempunyai batas usia, jumlah pertanyaan, skala, dimensi, dan metode skor sendiri. Jangan hardcode asumsi bahwa semua kuesioner mempunyai empat dimensi atau skala Likert 1–5.
+
+Usia peserta ditentukan berdasarkan tanggal lahir dan tanggal tes. Nilai `usia_saat_tes` harus divalidasi dengan perhitungan tanggal yang benar, bukan sekadar selisih tahun kalender.
+
+Sediakan skala Likert 1–5 untuk instrumen yang menggunakannya, dengan label jawaban yang jelas dan mudah dipahami. Label dan skala harus mengikuti konfigurasi instrumen.
+
+## 9. Data pemohon dan peserta
+
+Bedakan pemohon dengan peserta yang menjalani tes.
+
+- `kuesioner_pemohon` menyimpan data orang yang meminta tes.
+- `kuesioner_sesi` menyimpan sesi dan identitas peserta yang diuji.
+
+Pemohon dapat meminta tes untuk dirinya sendiri, anak, pasangan, atau orang lain sesuai kebijakan layanan.
+
+Sediakan pencarian berdasarkan nama pemohon, nomor HP, nama peserta, nomor HP peserta, kode sesi, dan status. Gunakan pagination server-side untuk daftar yang berpotensi panjang.
+
+Jangan menggandakan data pemohon tanpa kebutuhan. Pertahankan relasi foreign key yang tersedia dan validasi data sebelum menyimpan.
+
+## 10. Sesi tes, QR, dan PIN
+
+Satu sesi dapat mencakup beberapa kuesioner melalui `kuesioner_sesi_detail`. Setiap detail sesi mengacu pada versi kuesioner yang digunakan.
+
+Alur yang diharapkan:
+
+1. Admin memilih atau membuat pemohon.
+2. Admin memasukkan data peserta.
+3. Admin memilih satu atau beberapa versi kuesioner yang sesuai usia peserta.
+4. Sistem membuat satu sesi dengan kode sesi unik.
+5. Sistem menghasilkan QR token acak yang cukup kuat dan PIN khusus sesi.
+6. QR digunakan untuk membuka akses sesi; PIN tetap harus dimasukkan untuk membuktikan akses.
+7. Peserta menyelesaikan setiap kuesioner.
+8. Peserta mengirim seluruh sesi secara final.
+9. Sistem mengunci jawaban setelah pengiriman final berhasil.
+10. Admin memproses seluruh hasil sesi dan menerbitkan hasil sesuai alur pemeriksaan.
+11. Peserta dapat melihat atau mengunduh laporan setelah akses hasil diaktifkan.
+
+Keamanan QR dan PIN:
+
+- Simpan hash token QR, bukan token mentah.
+- Simpan hash PIN menggunakan algoritma yang sesuai; PIN berentropi rendah memerlukan pembatasan percobaan yang ketat.
+- Token QR harus acak dan tidak dapat ditebak.
+- Terapkan batas percobaan PIN menggunakan `percobaan_pin_gagal` dan `terkunci_sampai`.
+- Reset penghitung kegagalan hanya melalui alur yang aman.
+- Jangan pernah menampilkan PIN atau token rahasia dalam log.
+- Sediakan mekanisme mengganti PIN dan mencabut akses sesi.
+- Jangan menggunakan QR saja sebagai bukti akses.
+- Jangan memasukkan data pribadi sensitif langsung ke URL QR.
+- Gunakan HTTPS.
+
+Pertahankan status sesi yang sudah ditetapkan:
+
+- `draf`
+- `aktif`
+- `menunggu_admin`
+- `diproses`
+- `hasil_terbit`
+- `dibatalkan`
+
+Status pengerjaan setiap kuesioner:
+
+- `belum_mulai`
+- `sedang_dikerjakan`
+- `selesai`
+
+Status pengelolaan:
+
+- `aktif`
+- `diarsipkan`
+
+Status akses hasil:
+
+- `belum_tersedia`
+- `aktif`
+- `dinonaktifkan`
+- `dicabut_permanen`
+
+Jangan mencampur status sesi, status pengelolaan, dan status akses hasil karena ketiganya mempunyai fungsi berbeda.
+
+## 11. Penyimpanan jawaban dan pengiriman final
+
+Simpan jawaban pada `kuesioner_jawaban` berdasarkan relasi sesi detail, pertanyaan, dan pilihan yang benar.
+
+Validasi bahwa:
+
+- Pertanyaan berasal dari versi kuesioner yang dipilih pada sesi detail.
+- Pilihan jawaban benar-benar milik pertanyaan tersebut.
+- Pertanyaan dan pilihan masih valid untuk sesi yang sedang dikerjakan.
+- Tidak ada jawaban ganda untuk pertanyaan yang sama dalam satu sesi detail.
+- Semua pertanyaan wajib sudah dijawab sebelum pengiriman final jika instrumen mewajibkannya.
+- Peserta hanya dapat mengakses sesi yang lolos autentikasi QR dan PIN.
+- Jawaban yang sudah dikunci tidak dapat diubah melalui request HTTP buatan, pemanggilan endpoint langsung, atau manipulasi JavaScript.
+
+Pengiriman final seluruh sesi harus bersifat atomik. Gunakan transaksi PostgreSQL untuk memvalidasi kelengkapan, mengunci perubahan jawaban, dan memperbarui status yang terkait.
+
+Jika proses gagal, jangan meninggalkan sesi dalam kondisi setengah terkirim. Operasi harus dapat ditangani dengan aman saat terjadi retry.
+
+## 12. Perhitungan skor dan interpretasi
+
+Buat `scoring.service.js` yang terpisah dari controller dan repository.
+
+Perhitungan harus membaca aturan skor dari database, bukan mengandalkan kode yang hanya cocok untuk satu jenis kuesioner.
+
+Ketentuan:
+
+- Dukung berbagai metode perhitungan sesuai konfigurasi instrumen.
+- Dukung pertanyaan yang memberi skor ke dimensi tertentu.
+- Dukung arah skor atau pemetaan pilihan sesuai `kuesioner_aturan_skor`.
+- Jangan mengasumsikan seluruh pilihan mempunyai nilai numerik langsung.
+- Validasi bahwa aturan skor lengkap dan konsisten sebelum menghitung.
+- Jangan mencampur dimensi dari versi yang berbeda.
+- Simpan hasil yang dapat ditelusuri kembali ke sesi detail dan instrumen yang digunakan.
+- Perhitungan ulang harus mempunyai aturan yang jelas dan tercatat dalam audit log.
+- Jangan menimpa hasil yang sudah diterbitkan secara diam-diam.
+
+Gunakan `kuesioner_hasil` untuk hasil utama dan `kuesioner_hasil_dimensi` untuk hasil per dimensi sesuai struktur aktual database.
+
+Gunakan `kuesioner_interpretasi` untuk mengambil interpretasi berdasarkan jenis interpretasi, versi, kode hasil, dan rentang skor yang sesuai dengan schema.
+
+Apabila hasil belum cukup lengkap atau konfigurasi skor tidak valid, hentikan proses dengan pesan yang jelas. Jangan menerbitkan laporan dengan skor yang salah atau interpretasi yang tidak cocok.
+
+## 13. Pemeriksaan dan penerbitan hasil
+
+Setelah peserta mengirim sesi secara final:
+
+1. Tandai sesi sebagai `menunggu_admin`.
+2. Admin membuka antrean sesi yang menunggu pemeriksaan.
+3. Sistem menghitung skor otomatis.
+4. Sistem menghasilkan draf hasil dan interpretasi awal.
+5. Admin memeriksa skor, interpretasi, dan kelengkapan data.
+6. Admin dapat mengoreksi draf jika diizinkan, dengan pencatatan perubahan.
+7. Hasil mengikuti status yang diizinkan database: `draf`, `diperiksa`, `disetujui`, `diterbitkan`.
+8. Laporan PDF dibuat dan disimpan sebagai laporan terkait hasil.
+9. Akses hasil baru diaktifkan setelah penerbitan berhasil.
+10. Catat aktor dan waktu setiap tindakan penting.
+
+Jangan menampilkan hasil yang belum diterbitkan kepada peserta.
+
+Perubahan hasil yang sudah diterbitkan harus melalui proses revisi atau penarikan yang jelas. Pertahankan riwayat laporan dan audit log.
+
+## 14. Laporan PDF
+
+Buat laporan PDF yang profesional, rapi, dan layak diberikan kepada peserta atau pemohon.
+
+Target panjang laporan untuk kuesioner kepribadian yang mendukung laporan terperinci adalah sekitar 10–15 halaman, menyesuaikan materi yang tersedia. Jangan memaksakan jumlah halaman dengan konten kosong atau berulang.
+
+Struktur laporan dapat mencakup:
+
+1. Sampul dan identitas peserta.
+2. Kode sesi dan tanggal tes.
+3. Ringkasan hasil.
+4. Penjelasan metode dan batasan interpretasi.
+5. Hasil setiap dimensi beserta visualisasi skor.
+6. Gambaran karakteristik.
+7. Potensi kekuatan.
+8. Area yang dapat dikembangkan.
+9. Pola komunikasi dan relasi sosial.
+10. Kecenderungan dalam kerja sama dan kepemimpinan.
+11. Respons terhadap konflik dan tekanan, jika memang diukur.
+12. Saran pengembangan diri.
+13. Ringkasan rekomendasi.
+14. Penutup dan catatan interpretasi.
+
+Materi laporan harus ditentukan oleh jenis kuesioner. Jangan memasukkan bab yang tidak didukung oleh instrumen atau hasil yang tersedia.
+
+Laporan harus menyertakan pernyataan bahwa tes merupakan alat refleksi atau pengembangan diri sesuai tujuan instrumennya, bukan diagnosis medis atau psikologis. Jangan mengklaim validitas ilmiah yang belum dibuktikan.
+
+Gunakan `kuesioner_laporan` untuk metadata laporan, status, nomor revisi, dan lokasi penyimpanan sesuai kolom aktual. Jangan mengarang nama kolom.
+
+Laporan harus dapat diunduh hanya jika status penerbitan dan `status_akses_hasil` mengizinkan. Gunakan URL unduhan yang aman dan tidak membocorkan file laporan kepada pengguna lain.
+
+Jika menggunakan Supabase Storage untuk menyimpan PDF, simpan file dalam bucket privat dan gunakan mekanisme akses terkontrol. Jangan membuat bucket atau kebijakan akses baru tanpa memeriksa konfigurasi yang ada.
+
+## 15. Pengarsipan dan penghapusan data
+
+Pengarsipan tidak sama dengan penghapusan.
+
+- Sesi yang diarsipkan tidak muncul dalam daftar operasional aktif secara default.
+- Data historis tetap tersimpan.
+- Laporan terbit tetap dipertahankan sesuai kebijakan retensi.
+- Akses hasil dapat dinonaktifkan tanpa menghapus hasil.
+- Akses yang dicabut permanen tidak boleh aktif kembali secara otomatis.
+- Penghapusan permanen harus melalui mekanisme permintaan, pemeriksaan, persetujuan oleh Super Admin yang berbeda, dan eksekusi yang tercatat.
+
+Gunakan `kuesioner_permintaan_hapus` untuk alur permintaan penghapusan sesuai constraint yang tersedia.
+
+Hormati foreign key `ON DELETE RESTRICT`. Jangan melakukan cascade delete atau menghapus data secara paksa untuk menghindari constraint.
+
+Buat mekanisme penghapusan yang memeriksa keterkaitan data, file laporan, audit, dan kewajiban retensi. Jangan menghapus audit log yang diperlukan untuk akuntabilitas.
+
+## 16. Audit log
+
+Gunakan `kuesioner_audit_log` untuk mencatat tindakan penting, antara lain:
+
+- Login berhasil atau gagal sesuai kebijakan log.
+- Perubahan akun dan role.
+- Pembuatan atau perubahan sesi.
+- Pengiriman final.
+- Perhitungan ulang skor.
+- Perubahan draf hasil.
+- Persetujuan dan penerbitan hasil.
+- Penerbitan atau penarikan laporan.
+- Perubahan akses hasil.
+- Pengarsipan.
+- Pengajuan, persetujuan, penolakan, dan eksekusi penghapusan.
+
+Simpan informasi aktor, jenis entitas, identitas entitas, waktu, dan detail tindakan sesuai kolom yang benar-benar tersedia.
+
+Jangan menyimpan password, password hash, PIN mentah, token QR mentah, connection string, atau informasi rahasia lain ke audit log.
+
+Audit log tidak boleh dapat diedit sembarangan melalui antarmuka Admin.
+
+## 17. Tampilan aplikasi
+
+Buat desain modern, profesional, bersih, dan responsif.
+
+### Halaman publik
+
+- Halaman beranda.
+- Penjelasan layanan dan jenis kuesioner.
+- Halaman akses peserta melalui QR.
+- Form PIN.
+- Halaman pengerjaan kuesioner.
+- Halaman konfirmasi pengiriman final.
+- Halaman akses hasil dan unduh laporan.
+- Halaman error dan akses ditolak.
+
+### Dashboard Admin
+
+- Ringkasan jumlah pemohon.
+- Jumlah sesi aktif.
+- Sesi menunggu pemeriksaan.
+- Hasil yang masih berupa draf.
+- Hasil yang sudah diterbitkan.
+- Daftar laporan.
+- Pengelolaan pemohon.
+- Pengelolaan sesi.
+- Pemeriksaan hasil.
+- Pengelolaan laporan.
+- Arsip.
+- Permintaan penghapusan.
+
+### Dashboard Super Admin
+
+- Seluruh fungsi yang diizinkan untuk Admin.
+- Manajemen akun Admin.
+- Master kuesioner dan versi.
+- Pengelolaan dimensi, pertanyaan, pilihan, aturan skor, dan interpretasi.
+- Audit log.
+- Persetujuan penghapusan.
+- Konfigurasi sistem yang diizinkan.
+
+Gunakan layout bersama, navbar, sidebar dashboard, breadcrumb, tabel dengan pagination, form validation, modal konfirmasi, notifikasi, dan halaman kosong yang informatif.
+
+Pisahkan file CSS dan JavaScript per kebutuhan. Hindari inline CSS atau JavaScript yang berlebihan. Gunakan label input yang jelas, pesan validasi bahasa Indonesia, dan dukungan navigasi keyboard.
+
+## 18. Keamanan aplikasi
+
+Terapkan:
+
+- Helmet dan konfigurasi security headers.
+- Validasi serta sanitasi input di server.
+- Parameterized SQL.
+- Perlindungan CSRF pada form yang menggunakan session cookie.
+- Rate limiting untuk login dan akses QR/PIN.
+- Pembatasan hak akses di server.
+- Session regeneration setelah login.
+- Cookie session yang aman.
+- Penanganan error tanpa membocorkan stack trace ke pengguna.
+- Validasi upload file jika fitur upload diterapkan.
+- Proteksi IDOR agar pengguna tidak bisa mengakses sesi atau laporan milik pihak lain dengan mengganti ID di URL.
+- Validasi status bisnis di setiap endpoint, bukan hanya di antarmuka.
+- Pencatatan audit yang aman.
+- Pengelolaan secret melalui environment variables.
+
+Jangan pernah mengirim `DATABASE_URL`, kredensial database, session secret, atau kredensial istimewa ke frontend.
+
+## 19. Ketentuan khusus deployment Vercel
+
+Aplikasi harus kompatibel dengan model eksekusi Vercel.
+
+- Buat entry point serverless yang mengekspor Express app.
+- Jangan menjalankan `app.listen()` sebagai proses permanen pada entry point production Vercel.
+- Gunakan `app.listen()` hanya untuk development lokal melalui entry point yang sesuai.
+- Atur routing dan konfigurasi Vercel secara benar.
+- Pastikan path view EJS, file CSS, JavaScript, gambar, dan template PDF berfungsi setelah deployment.
+- Jangan bergantung pada penyimpanan file lokal yang persisten.
+- Jangan mengandalkan Express MemoryStore untuk session production.
+- Gunakan session store PostgreSQL yang sesuai dan uji kompatibilitasnya dengan Vercel.
+- Gunakan connection pooling PostgreSQL yang sesuai untuk lingkungan serverless.
+- Kelola koneksi `pg.Pool` secara efisien dan hindari membuat pool baru pada setiap request.
+- Gunakan environment variables untuk konfigurasi production.
+- Sediakan instruksi deployment, pengaturan environment variables, dan pengujian setelah deployment.
+
+Jangan mengasumsikan semua runtime atau konfigurasi Vercel identik. Verifikasi kompatibilitas dependency dan konfigurasi yang digunakan.
+
+## 20. Environment variables
+
+Buat `.env.example` tanpa nilai rahasia, misalnya:
+
+```dotenv
+NODE_ENV=development
+PORT=3000
+DATABASE_URL=
+SESSION_SECRET=
+APP_BASE_URL=http://localhost:3000
+```
+
+Tambahkan variabel lain hanya jika benar-benar diperlukan, misalnya konfigurasi Storage, dengan penamaan yang konsisten.
+
+Jangan memasukkan `.env` ke Git. Jangan pernah meminta pengguna menempelkan password database atau secret produksi ke percakapan.
+
+Jelaskan bahwa `DATABASE_URL` harus menggunakan connection string PostgreSQL Supabase yang sesuai untuk aplikasi Node.js dan koneksi serverless. Jangan menganggap koneksi langsung selalu tersedia tanpa memeriksa konfigurasi jaringan dan pooler Supabase.
+
+## 21. Pengujian wajib
+
+Buat pengujian untuk fungsi inti dan alur bisnis:
+
+- Login benar dan salah.
+- Akun nonaktif atau terkunci.
+- Akses role Admin dan Super Admin.
+- Pengelolaan sesi.
+- Validasi QR dan PIN.
+- Batas percobaan PIN.
+- Validasi usia dan versi kuesioner.
+- Penyimpanan jawaban.
+- Penolakan perubahan jawaban setelah final.
+- Validasi pertanyaan dan pilihan berdasarkan versi.
+- Perhitungan skor.
+- Pemilihan interpretasi.
+- Pemeriksaan dan penerbitan hasil.
+- Pembuatan dan akses laporan PDF.
+- Penonaktifan akses hasil.
+- Pengarsipan.
+- Persetujuan penghapusan oleh Super Admin berbeda.
+- Audit log.
+- Koneksi database dan session store pada production.
+
+Jangan menyatakan aplikasi berhasil hanya karena server lokal dapat dijalankan. Uji alur bisnis dan deployment secara terpisah.
+
+## 22. Cara pengerjaan dan hasil yang harus diberikan
+
+Kerjakan secara bertahap dan terstruktur.
+
+### Tahap 1 — Audit database
+
+- Baca dokumentasi database.
+- Identifikasi kolom dan relasi aktual.
+- Buat matriks tabel dan modul aplikasi.
+- Tandai kolom atau informasi yang belum terverifikasi.
+- Identifikasi potensi masalah sequence, hak akses, dan konsistensi data.
+- Jangan mengubah database.
+
+### Tahap 2 — Fondasi aplikasi
+
+- Buat struktur direktori.
+- Buat konfigurasi Express, PostgreSQL, session, middleware, EJS, dan error handler.
+- Pastikan server lokal berjalan dan koneksi database berhasil.
+
+### Tahap 3 — Autentikasi dan dashboard
+
+- Implementasikan login mandiri.
+- Terapkan role Admin dan Super Admin.
+- Buat dashboard awal dan proteksi route.
+
+### Tahap 4 — Master dan sesi
+
+- Implementasikan master kuesioner sesuai hak akses.
+- Implementasikan pemohon, sesi, QR/PIN, dan detail sesi.
+- Uji pembuatan sesi dengan beberapa kuesioner.
+
+### Tahap 5 — Pengerjaan dan skor
+
+- Implementasikan halaman pengerjaan.
+- Simpan jawaban dengan validasi.
+- Implementasikan pengiriman final dan penguncian.
+- Implementasikan perhitungan skor serta interpretasi.
+
+### Tahap 6 — Pemeriksaan dan laporan
+
+- Implementasikan antrean pemeriksaan.
+- Buat draf hasil.
+- Implementasikan persetujuan dan penerbitan.
+- Buat laporan PDF dan kontrol akses hasil.
+
+### Tahap 7 — Audit, keamanan, dan deployment
+
+- Implementasikan audit log dan penghapusan terkendali.
+- Uji keamanan dan alur end-to-end.
+- Deploy ke Vercel.
+- Dokumentasikan konfigurasi dan troubleshooting.
+
+Pada setiap tahap, berikan kode yang benar-benar berfungsi, bukan hanya contoh atau pseudocode. Sebutkan file yang dibuat atau diubah, fungsi file, konfigurasi yang dibutuhkan, dan langkah pengujian.
+
+Jika ada informasi schema yang belum tersedia, tanyakan hanya hal yang benar-benar diperlukan. Jangan mengarang kolom atau mengubah nama kolom agar cocok dengan asumsi kode.
+
+Jangan mengerjakan semua modul dengan kode placeholder. Jangan menyatakan fitur selesai jika route, controller, service, repository, view, validasi, dan database-nya belum terhubung.
+
+## 23. Kriteria selesai
+
+Aplikasi dianggap siap untuk pengujian penerimaan jika:
+
+1. Login mandiri berfungsi tanpa Supabase Auth.
+2. Role Admin dan Super Admin diterapkan konsisten.
+3. Seluruh akses data melalui backend yang terproteksi.
+4. Master kuesioner dan versi dapat dikelola sesuai kewenangan.
+5. Satu sesi dapat memuat beberapa kuesioner.
+6. Peserta dapat menyelesaikan dan mengirim sesi secara final.
+7. Jawaban yang sudah dikirim tidak dapat diubah secara tidak sah.
+8. Skor dan interpretasi mengikuti aturan instrumen yang benar.
+9. Admin dapat memeriksa dan menerbitkan hasil.
+10. Laporan PDF dapat dibuat dan diakses sesuai status izin.
+11. Akses hasil dapat dinonaktifkan tanpa menghapus hasil.
+12. Pengarsipan dan penghapusan memiliki alur terpisah.
+13. Audit log mencatat tindakan penting.
+14. Tidak ada perubahan schema yang tidak disetujui.
+15. Aplikasi lolos pengujian inti dan dapat dijalankan di Vercel.
+
+Mulailah dari **Tahap 1 — Audit database**, kemudian lanjutkan secara berurutan. Prioritaskan integritas database, keamanan, arsitektur yang benar, dan konsistensi alur bisnis dibandingkan kecepatan membuat banyak halaman sekaligus.

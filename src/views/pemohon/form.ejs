@@ -1,0 +1,18 @@
+<% layout('layouts/main') -%>
+<div class="page-heading"><div><div class="eyebrow">DATA MASTER</div><h1><%= mode === 'create' ? 'Tambah Pemohon' : 'Ubah Pemohon' %></h1><p>Isi data pemohon sesuai informasi yang tersedia.</p></div><a class="btn btn-outline-secondary" href="/admin/pemohon">Kembali</a></div>
+<section class="content-card form-card">
+  <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+  <form method="post" action="<%= mode === 'create' ? '/admin/pemohon' : '/admin/pemohon/' + item.pemohon_id %>">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="row g-3">
+      <% editable.forEach(field => { %><div class="col-md-<%= field.name === 'alamat' || field.name === 'catatan' ? '12' : '6' %>">
+        <label class="form-label" for="f_<%= field.name %>"><%= field.label %><%= field.required ? ' *' : '' %></label>
+        <% if (field.type === 'select') { %><select class="form-select" id="f_<%= field.name %>" name="<%= field.name %>"><% field.options.forEach(opt => { %><option value="<%= opt %>" <%= String(item[field.name] || 'aktif') === opt ? 'selected' : '' %>><%= opt === 'aktif' ? 'Aktif' : 'Nonaktif' %></option><% }) %></select>
+        <% } else if (field.type === 'textarea') { %><textarea class="form-control" id="f_<%= field.name %>" name="<%= field.name %>" rows="3"><%= item[field.name] || '' %></textarea>
+        <% } else { %><input class="form-control" id="f_<%= field.name %>" name="<%= field.name %>" type="<%= field.type %>" value="<%= item[field.name] || '' %>" <%= field.required ? 'required' : '' %> maxlength="500">
+        <% } %>
+      </div><% }) %>
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-4"><a class="btn btn-outline-secondary" href="/admin/pemohon">Batal</a><button class="btn btn-primary" type="submit">Simpan Pemohon</button></div>
+  </form>
+</section>

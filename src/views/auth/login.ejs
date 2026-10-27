@@ -1,0 +1,8 @@
+<% layout('layouts/main') -%>
+<div class="login-shell"><section class="login-visual"><div class="eyebrow">PLATFORM KUESIONER</div><h1>Kenali potensi.<br><span>Kembangkan diri.</span></h1><p>Kelola instrumen, sesi, hasil, dan laporan dalam satu ruang kerja yang terstruktur.</p><div class="visual-orbit orbit-one"></div><div class="visual-orbit orbit-two"></div></section>
+<section class="login-panel"><div class="login-card"><div class="small-caps">ADMINISTRATOR</div><h2>Selamat datang</h2><p class="text-secondary mb-4">Masuk untuk melanjutkan ke dashboard.</p>
+<% if (error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
+<form method="post" action="/login" class="needs-validation" novalidate><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<div class="mb-3"><label class="form-label" for="email">Email</label><input class="form-control form-control-lg" id="email" name="email" type="email" autocomplete="username" required maxlength="254"><div class="invalid-feedback">Masukkan email yang valid.</div></div>
+<div class="mb-4"><label class="form-label" for="password">Kata sandi</label><input class="form-control form-control-lg" id="password" name="password" type="password" autocomplete="current-password" required maxlength="200"><div class="invalid-feedback">Kata sandi wajib diisi.</div></div>
+<button class="btn btn-primary btn-lg w-100" type="submit">Masuk ke dashboard <span aria-hidden="true">→</span></button></form><p class="login-note">Akses hanya untuk administrator terdaftar.</p></div></section></div>

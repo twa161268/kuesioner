@@ -1,0 +1,4 @@
+<div class="table-responsive"><table class="table align-middle app-table"><thead><tr><% fields.forEach(field => { %><th><%= field.replaceAll('_',' ') %></th><% }) %></tr></thead><tbody>
+<% if (!rows.length) { %><tr><td colspan="<%= fields.length %>" class="text-center py-5 text-muted">Belum ada data yang dapat ditampilkan.</td></tr><% } %>
+<% rows.forEach(row => { %><tr><% fields.forEach(field => { %><td><% const val = row[field]; if (val instanceof Date) { %><%= val.toLocaleDateString('id-ID') %><% } else if (val === null || val === undefined || val === '') { %><span class="text-muted">—</span><% } else { %><%= String(val) %><% } %></td><% }) %></tr><% }) %>
+</tbody></table></div>
