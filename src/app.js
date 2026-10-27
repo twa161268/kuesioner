@@ -17,7 +17,7 @@ app.disable('x-powered-by');
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(express.json({ limit: '100kb' }));
-app.use('/public', express.static(path.join(process.cwd(), 'public'), { maxAge: env.isProduction ? '1d' : 0, fallthrough: true }));
+app.use(express.static(path.join(process.cwd(), 'public'), { maxAge: env.isProduction ? '1d' : 0, fallthrough: true }));
 app.use(createSessionMiddleware());
 app.use((req, res, next) => {
   res.locals.currentUser = req.session?.user || null;
